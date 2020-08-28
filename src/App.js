@@ -49,6 +49,25 @@ function App() {
         [charIdsPerLocation]
     );
 
+	useEffect(
+	() => {
+		// If there are charIds we need to show, execute following:
+		if(charIdsPerDimension) {
+			// Get all the characters by their id
+			axios({
+				url: `https://rickandmortyapi.com/api/character/${charIdsPerDimension}`,
+				method: 'get',
+			})
+			.then(function (response) {
+				// Store character details
+				setCharDetailsByDimension(response.data);
+			});
+		}
+	},
+	// Only update if charIds update
+	[charIdsPerDimension]
+);
+
 	const processCharacterIds = residents => {
 	    let ids = [];
 	    residents.forEach(resident => {
@@ -61,7 +80,29 @@ function App() {
 	    return ids;
 	}
 
+	useEffect(() => {
+	axios({
+		// Endpoint from https://rickandmortyapi.com/documentation/#get-all-locations
+		url: 'https://rickandmortyapi.com/api/location/?dimension=Dimension C-137',
+		method: 'get',
+	})
+	.then(function (response) {
+		let ids = [];
+		response.data.results.forEach(location => {
+			let idsPerLocation = processCharacterIds(location.residents);
+			ids = ids.concat(idsPerLocation);
+		});
+		setDimensionDetails({
+			name: 'Dimension C-137',
+		});
+		setCharIdsPerDimension(ids);
+	});
+}, []);
+
 	const charactersToDisplay = !charDetailsByLocation.length ? [charDetailsByLocation] : charDetailsByLocation;
+
+	const charactersToDisplayPerDimension = !charDetailsByDimension.length ? [charDetailsByDimension] : charDetailsByDimension;
+
 
     return (
 		<div className="App">
@@ -82,6 +123,25 @@ function App() {
                     })}
                 </div>
             </div>
+
+			<div className="section">
+			                <h1 className="heading">Dimension: {dimensionDetails.name}</h1>
+			                <div className="charWrapper">
+			                    {charactersToDisplayPerDimension && charactersToDisplayPerDimension.map((charData, index) => {
+			                        return (
+			                            <div key={index + 'wrapper'}>
+			                                <img src={charData.image} alt={charData.name + 'image'} />
+			                                <h2><strong>Name:</strong> {charData.name}</h2>
+			                                <h4><strong>Species:</strong> {charData.species}</h4>
+			                                <h4><strong>Gender:</strong> {charData.gender}</h4>
+			                                <h4><strong>Last location:</strong> {charData.location && charData.location.name}</h4>
+			                                <h4><strong>Dimension:</strong> {locationDetails.dimension}</h4>
+			                            </div>
+			                        )
+			                    })}
+			                </div>
+			            </div>
+
         </div>
     );
 }
